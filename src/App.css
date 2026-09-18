@@ -1,0 +1,274 @@
+.app {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.app-header h1 {
+  font-size: clamp(28px, 8vw, 40px);
+  margin: 0 0 6px;
+}
+
+.app-header p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.load-error {
+  color: var(--danger);
+  text-align: center;
+}
+
+.grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  background: var(--tile-bg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.tile-main {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  color: var(--text-h);
+}
+
+.tile-empty .tile-main {
+  color: var(--text);
+}
+
+.tile-plus {
+  font-size: clamp(28px, 8vw, 40px);
+  line-height: 1;
+}
+
+.tile-label {
+  font-size: clamp(14px, 4vw, 18px);
+  font-weight: 600;
+  text-align: center;
+  word-break: break-word;
+}
+
+.tile-filled .tile-main:active {
+  background: var(--accent-bg);
+}
+
+.tile-playing {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.tile-edit {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  position: relative;
+  background: var(--bg);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90svh;
+  overflow-y: auto;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px max(24px, env(safe-area-inset-bottom));
+}
+
+@media (min-width: 560px) {
+  .modal-backdrop {
+    align-items: center;
+  }
+  .modal {
+    border-radius: 20px;
+  }
+}
+
+.modal h2 {
+  margin: 0 0 16px;
+  font-size: 20px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--tile-bg);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.modal-step {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-step label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.modal-step input[type='text'],
+.modal-step input[type='password'] {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--tile-bg);
+  color: var(--text-h);
+  font-size: 16px;
+}
+
+.modal-step input[type='file'] {
+  font-size: 14px;
+}
+
+.modal-danger-zone {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn {
+  flex: 1;
+  padding: 14px;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--tile-bg);
+  color: var(--text-h);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.modal-error {
+  color: var(--danger);
+  font-size: 14px;
+  margin: 0;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--tile-bg);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.15s linear;
+}
+
+/* Waveform trimmer */
+
+.waveform {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  touch-action: none;
+}
+
+.waveform canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  background: var(--tile-bg);
+}
+
+.waveform-handle {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.waveform-handle span {
+  width: 6px;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}

@@ -6,6 +6,8 @@ from app.config import Settings
 from app.db import get_conn
 from app.models import Confidence, Finding, InputType, Kind
 from app.modules import (
+    darkweb_dorks,
+    domain_checks,
     dorks,
     email_offline,
     emailrep_mod,
@@ -25,6 +27,7 @@ from app.modules import (
 MODULES_BY_TYPE = {
     InputType.EMAIL: [
         email_offline,
+        domain_checks,
         gravatar_mod,
         emailrep_mod,
         xposedornot_mod,
@@ -32,11 +35,12 @@ MODULES_BY_TYPE = {
         hunter_mod,
         holehe_mod,
         dorks,
+        darkweb_dorks,
     ],
-    InputType.PHONE: [phone_offline, veriphone_mod, phoneinfoga_mod, dorks],
-    InputType.USERNAME: [sherlock_mod, maigret_mod, github_mod, dorks],
-    InputType.NAME_COMPANY: [tavily_mod, dorks],
-    InputType.URL: [dorks],
+    InputType.PHONE: [phone_offline, veriphone_mod, phoneinfoga_mod, dorks, darkweb_dorks],
+    InputType.USERNAME: [sherlock_mod, maigret_mod, github_mod, dorks, darkweb_dorks],
+    InputType.NAME_COMPANY: [tavily_mod, dorks, darkweb_dorks],
+    InputType.URL: [dorks, darkweb_dorks],
 }
 
 
@@ -82,6 +86,42 @@ async def _run_one(module, query: str, ctx: dict, cache: ModuleCache, quota_incr
         ctx.setdefault("timings", {})[module.name] = round(time.monotonic() - started, 2)
 
 
+_CONFIDENCE_RANK = {Confidence.HIGH: 3, Confidence.MEDIUM: 2, Confidence.LOW: 1}
+
+
+def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
+    """Merge findings that share a URL (e.g. the same GitHub profile found by
+    both the keyed API and Sherlock), keeping the highest-confidence one and
+    noting which other modules also found it."""
+    kept_by_url: dict[str, Finding] = {}
+    modules_by_url: dict[str, list[str]] = {}
+    deduped: list[Finding] = []
+
+    for finding in findings:
+        if not finding.url:
+            deduped.append(finding)
+            continue
+
+        modules = modules_by_url.setdefault(finding.url, [])
+        if finding.module not in modules:
+            modules.append(finding.module)
+
+        current_best = kept_by_url.get(finding.url)
+        if current_best is None or _CONFIDENCE_RANK[finding.confidence] > _CONFIDENCE_RANK[
+            current_best.confidence
+        ]:
+            kept_by_url[finding.url] = finding
+            if current_best is not None:
+                deduped.remove(current_best)
+            deduped.append(finding)
+
+    for url, modules in modules_by_url.items():
+        if len(modules) > 1:
+            kept_by_url[url].detail = {**kept_by_url[url].detail, "also_found_by": modules}
+
+    return deduped
+
+
 async def run_search(
     input_type: InputType,
     query: str,
@@ -120,4 +160,4 @@ async def run_search(
             )
 
     all_findings: list[Finding] = [f for group in results for f in group]
-    return all_findings
+    return _dedupe_findings(all_findings)

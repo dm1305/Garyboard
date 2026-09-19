@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 import secrets
 import shutil
@@ -5,8 +7,8 @@ from collections import defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import Depends, FastAPI, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -286,6 +288,66 @@ async def history_delete(
     with get_conn(settings.db_path) as conn:
         conn.execute("DELETE FROM searches WHERE id = ?", (search_id,))
     return RedirectResponse("/history", status_code=303)
+
+
+@app.get("/history/{search_id}/export.json")
+async def history_export_json(request: Request, search_id: int, _=Depends(require_login)):
+    with get_conn(settings.db_path) as conn:
+        search = conn.execute(
+            "SELECT id, input_type, raw_value, purpose, purpose_note, created_at FROM searches WHERE id = ?",
+            (search_id,),
+        ).fetchone()
+        if search is None:
+            raise HTTPException(status_code=404, detail="Search not found")
+        findings = conn.execute(
+            """
+            SELECT module, kind, title, url, detail_json, confidence, sensitive, fetched_at, cached
+            FROM findings WHERE search_id = ?
+            """,
+            (search_id,),
+        ).fetchall()
+
+    payload = {
+        "search": dict(search),
+        "findings": [
+            {**dict(f), "detail": json.loads(f["detail_json"])} for f in findings
+        ],
+    }
+    for finding in payload["findings"]:
+        del finding["detail_json"]
+
+    return JSONResponse(
+        payload,
+        headers={"Content-Disposition": f'attachment; filename="cog-host-search-{search_id}.json"'},
+    )
+
+
+@app.get("/history/{search_id}/export.csv")
+async def history_export_csv(request: Request, search_id: int, _=Depends(require_login)):
+    with get_conn(settings.db_path) as conn:
+        search = conn.execute("SELECT id FROM searches WHERE id = ?", (search_id,)).fetchone()
+        if search is None:
+            raise HTTPException(status_code=404, detail="Search not found")
+        findings = conn.execute(
+            """
+            SELECT module, kind, title, url, confidence, sensitive, fetched_at, cached
+            FROM findings WHERE search_id = ?
+            """,
+            (search_id,),
+        ).fetchall()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["module", "kind", "title", "url", "confidence", "sensitive", "fetched_at", "cached"])
+    columns = ["module", "kind", "title", "url", "confidence", "sensitive", "fetched_at", "cached"]
+    for f in findings:
+        writer.writerow([f[col] for col in columns])
+
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="cog-host-search-{search_id}.csv"'},
+    )
 
 
 @app.post("/history/purge")

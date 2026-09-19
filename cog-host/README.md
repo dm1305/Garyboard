@@ -21,8 +21,21 @@ desktop launcher) is drafted in `docs/` but untested on real hardware.
   default with a hard refusal to bind to the LAN without a password hash set.
 - **Offline modules** (no API key, no third party contacted beyond public
   DNS/RDAP): email syntax + MX + disposable-domain check + RDAP domain age;
-  phone type/region/carrier via `phonenumbers` plus a `wa.me` link; dork
-  links (Google/Bing/DuckDuckGo) as the keyless fallback for everything.
+  SPF/DMARC records + RDAP registrar for the email's domain (DKIM is
+  deliberately skipped - its selector can't be guessed); phone
+  type/region/carrier via `phonenumbers` plus a `wa.me` link; dork links
+  (Google/Bing/DuckDuckGo) as the keyless fallback for everything.
+- **Dark-web search link**: a prefilled Ahmia (ahmia.fi) search URL, exactly
+  the same keyless-link pattern as the dork links - Cog Host never fetches
+  it or any `.onion` address itself; you open results yourself in Tor
+  Browser. Raw dark-web crawling and leaked-credential contents stay out of
+  scope by design (see `PLAN.md` section 2).
+- **Finding deduplication**: when two modules independently find the same
+  URL (e.g. a GitHub profile via both the API and Sherlock), the lower-
+  confidence duplicate is merged in as "also found by" rather than shown
+  twice.
+- **Export**: download any past search's findings as JSON or CSV from the
+  History page.
 - **Keyed modules**, each skipping cleanly with "no key" when unconfigured:
   Hunter (behind a "limited-quota checks" opt-in, since it spends shared
   monthly credits), EmailRep, Veriphone, Tavily (LinkedIn search restricted
@@ -41,11 +54,11 @@ desktop launcher) is drafted in `docs/` but untested on real hardware.
   dropdown, live per-module progress, confidence chips, and Status /
   History / Keys / About pages. Vendor HTMX per `app/static/README.md` for
   the live-progress enhancement; the app works fully without it.
-- **48 tests** covering input detection/rejection, the guard, offline
+- **59 tests** covering input detection/rejection, the guard, offline
   modules (mocked HTTP/DNS), keyed-module key handling, subprocess-tool
-  fallback, DB purge, the LAN-bind refusal, and regression tests for the two
-  real bugs found while testing Sherlock/Maigret/Holehe against the real
-  CLIs.
+  fallback, DB purge, the LAN-bind refusal, deduplication, JSON/CSV export,
+  and regression tests for the two real bugs found while testing
+  Sherlock/Maigret/Holehe against the real CLIs.
 
 ## What's still a human step
 

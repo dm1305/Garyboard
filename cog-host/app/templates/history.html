@@ -19,6 +19,8 @@
       <td>{{ s.raw_value }}</td>
       <td>{{ s.purpose }}</td>
       <td>
+        <a href="/history/{{ s.id }}/export.json" style="font-size: 0.8rem;">JSON</a>
+        · <a href="/history/{{ s.id }}/export.csv" style="font-size: 0.8rem;">CSV</a>
         <form method="post" action="/history/{{ s.id }}/delete" style="display:inline;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <button type="submit" style="background: var(--danger); padding: 0.2rem 0.6rem; font-size: 0.8rem;">Delete</button>

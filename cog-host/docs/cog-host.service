@@ -1,0 +1,21 @@
+# Install as a systemd USER unit (Phase 5):
+#   mkdir -p ~/.config/systemd/user
+#   cp docs/cog-host.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now cog-host.service
+#
+# Ask before `loginctl enable-linger $USER` - only needed if the Pi should
+# run this headless (no user logged in at boot).
+[Unit]
+Description=Cog Host local OSINT dashboard
+After=network.target
+
+[Service]
+WorkingDirectory=%h/cog-host
+EnvironmentFile=%h/cog-host/.env
+ExecStart=%h/cog-host/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8080
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

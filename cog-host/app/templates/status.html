@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Module health</h2>
+  <table>
+    <tr><th>Module</th><th>Available</th><th>Notes</th></tr>
+    {% for m in modules %}
+    <tr>
+      <td>{{ m.name }}</td>
+      <td>{{ "yes" if m.available else "no" }}</td>
+      <td>{{ m.note }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Monthly quota</h2>
+  {% for q in quota %}
+  <div class="field">
+    <label>{{ q.module }}: {{ q.used }} / {{ q.limit }} ({{ q.pct }}%)</label>
+    <div class="quota-bar"><div class="quota-fill {{ 'warn' if q.warn else '' }}" style="width: {{ q.pct if q.pct <= 100 else 100 }}%;"></div></div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

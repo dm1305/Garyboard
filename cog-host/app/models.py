@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 
 
-class Kind(str, Enum):
+class Kind(StrEnum):
     ACCOUNT = "account"
     PROFILE = "profile"
     BREACH = "breach"
@@ -13,13 +13,13 @@ class Kind(str, Enum):
     NOTE = "note"
 
 
-class Confidence(str, Enum):
+class Confidence(StrEnum):
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
 
 
-class InputType(str, Enum):
+class InputType(StrEnum):
     EMAIL = "email"
     PHONE = "phone"
     USERNAME = "username"
@@ -38,7 +38,7 @@ class Finding:
     detail: dict = field(default_factory=dict)
     sensitive: bool = False
     fetched_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
     cached: bool = False
 

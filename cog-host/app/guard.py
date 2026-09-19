@@ -1,7 +1,7 @@
 import hashlib
 import os
-from datetime import datetime, timedelta, timezone
-from enum import Enum
+from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 from pathlib import Path
 
 from app.db import get_conn
@@ -21,7 +21,7 @@ SENSITIVE_DOMAINS = {
 }
 
 
-class Purpose(str, Enum):
+class Purpose(StrEnum):
     OWN_FOOTPRINT = "own_footprint"
     VERIFY_CONTACT = "verify_contact"
     SCAM_CHECK = "scam_check"
@@ -68,7 +68,7 @@ def check_purpose(purpose: str | None, purpose_note: str | None, confirmed: bool
 def check_rate_limit(db_path: Path, limit_per_hour: int) -> None:
     if limit_per_hour <= 0:
         return
-    cutoff = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
     with get_conn(db_path) as conn:
         count = conn.execute(
             "SELECT COUNT(*) AS n FROM audit_log WHERE created_at >= ?",
@@ -88,7 +88,7 @@ def record_audit(
     purpose: str,
 ) -> None:
     identifier_hash = hash_identifier(raw_value, salt_path)
-    created_at = datetime.now(timezone.utc).isoformat()
+    created_at = datetime.now(UTC).isoformat()
     with get_conn(db_path) as conn:
         conn.execute(
             "INSERT INTO audit_log (input_type, identifier_hash, purpose, created_at) VALUES (?, ?, ?, ?)",

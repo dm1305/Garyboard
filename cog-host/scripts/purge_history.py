@@ -6,7 +6,7 @@ a systemd user timer or cron:
     .venv/bin/python scripts/purge_history.py
 """
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -17,7 +17,7 @@ from app.db import get_conn
 
 def main() -> None:
     cutoff = (
-        datetime.now(timezone.utc) - timedelta(days=settings.history_retention_days)
+        datetime.now(UTC) - timedelta(days=settings.history_retention_days)
     ).isoformat()
     with get_conn(settings.db_path) as conn:
         searches_deleted = conn.execute(

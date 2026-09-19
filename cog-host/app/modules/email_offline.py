@@ -3,7 +3,7 @@ This module does MX lookup, a disposable-domain check, and RDAP domain age.
 MX and RDAP are network calls but hit only public DNS/registry infrastructure,
 not any third-party OSINT service.
 """
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import dns.exception
 import dns.resolver
@@ -56,10 +56,10 @@ async def _domain_age_days(domain: str, client: httpx.AsyncClient) -> int | None
     for event in data.get("events", []):
         if event.get("eventAction") == "registration":
             try:
-                registered = datetime.fromisoformat(event["eventDate"].replace("Z", "+00:00"))
+                registered = datetime.fromisoformat(event["eventDate"])
             except (KeyError, ValueError):
                 return None
-            return (datetime.now(timezone.utc) - registered).days
+            return (datetime.now(UTC) - registered).days
     return None
 
 

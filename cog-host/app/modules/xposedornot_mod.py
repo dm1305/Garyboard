@@ -22,7 +22,8 @@ async def run(query: str, ctx: dict) -> list[Finding]:
 
     data = resp.json()
     breaches = data.get("breaches", [])
-    flat = [b for group in breaches for b in group] if breaches and isinstance(breaches[0], list) else breaches
+    nested = bool(breaches) and isinstance(breaches[0], list)
+    flat = [b for group in breaches for b in group] if nested else breaches
     if not flat:
         return [note(name, "No breaches found")]
     return [

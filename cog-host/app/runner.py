@@ -56,7 +56,7 @@ async def _run_one(module, query: str, ctx: dict, cache: ModuleCache, quota_incr
         quota_increment(module.name, getattr(module, "quota_cost", 0))
         cache.set(module.name, query, findings)
         return findings
-    except asyncio.TimeoutError:
+    except TimeoutError:
         err = [
             Finding(
                 module=module.name,

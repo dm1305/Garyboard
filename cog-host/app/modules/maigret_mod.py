@@ -41,12 +41,13 @@ async def run(query: str, ctx: dict) -> list[Finding]:
         )
         try:
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
             return [note(name, "Maigret timed out")]
 
-        json_files = list(Path(tmpdir).glob(f"report_{query}_simple.json"))
-        if not json_files:
+        json_path = Path(tmpdir) / f"report_{query}_simple.json"
+        exists = await asyncio.to_thread(json_path.exists)
+        if not exists:
             if proc.returncode != 0:
                 # Maigret prints its own errors to stdout, not stderr.
                 combined = (stderr + b"\n" + stdout).decode("utf-8", "replace").strip().splitlines()
@@ -55,7 +56,8 @@ async def run(query: str, ctx: dict) -> list[Finding]:
             return [note(name, "Maigret found no results")]
 
         try:
-            data = json.loads(json_files[0].read_text(encoding="utf-8"))
+            content = await asyncio.to_thread(json_path.read_text, encoding="utf-8")
+            data = json.loads(content)
         except (json.JSONDecodeError, OSError):
             return [note(name, "Could not parse Maigret output")]
 

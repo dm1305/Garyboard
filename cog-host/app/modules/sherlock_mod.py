@@ -38,7 +38,7 @@ async def run(query: str, ctx: dict) -> list[Finding]:
         )
         try:
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
             return [note(name, "Sherlock timed out")]
 

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from app.db import get_conn
@@ -12,7 +12,7 @@ MONTHLY_LIMITS = {
 
 
 def _current_period() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m")
+    return datetime.now(UTC).strftime("%Y-%m")
 
 
 def get_used(db_path: Path, module: str) -> int:

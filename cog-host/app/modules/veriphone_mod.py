@@ -26,11 +26,13 @@ async def run(query: str, ctx: dict) -> list[Finding]:
     data = resp.json()
     if not data.get("phone_valid"):
         return [note(name, "Veriphone: number not valid")]
+    phone_type = data.get("phone_type", "unknown type")
+    carrier = data.get("carrier", "unknown carrier")
     return [
         Finding(
             module=name,
             kind=Kind.LINE_INFO,
-            title=f"Veriphone: {data.get('phone_type', 'unknown type')}, {data.get('carrier', 'unknown carrier')}",
+            title=f"Veriphone: {phone_type}, {carrier}",
             confidence=Confidence.HIGH,
             detail={
                 "country": data.get("country"),

@@ -2,7 +2,7 @@ import json
 import secrets
 import shutil
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Form, Request
@@ -23,10 +23,14 @@ from app.guard import (
     check_rate_limit,
     record_audit,
 )
-from app.models import InputType
 from app.quota import status as quota_status
 from app.runner import MODULES_BY_TYPE, run_search
-from app.security import check_csrf, get_csrf_token, is_authenticated, require_login, verify_password
+from app.security import (
+    check_csrf,
+    get_csrf_token,
+    require_login,
+    verify_password,
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -58,7 +62,9 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
     response = await call_next(request)
-    response.headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'"
+    )
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["X-Content-Type-Options"] = "nosniff"
     return response
@@ -147,8 +153,11 @@ async def search(
 
     with get_conn(settings.db_path) as conn:
         cursor = conn.execute(
-            "INSERT INTO searches (input_type, raw_value, purpose, purpose_note, created_at) VALUES (?, ?, ?, ?, ?)",
-            (detected.input_type.value, query, purpose, purpose_note, datetime.now(timezone.utc).isoformat()),
+            """
+            INSERT INTO searches (input_type, raw_value, purpose, purpose_note, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (detected.input_type.value, query, purpose, purpose_note, datetime.now(UTC).isoformat()),
         )
         search_id = cursor.lastrowid
 
@@ -168,7 +177,8 @@ async def search(
             conn.execute(
                 """
                 INSERT INTO findings
-                    (search_id, module, kind, title, url, detail_json, confidence, sensitive, fetched_at, cached)
+                    (search_id, module, kind, title, url, detail_json,
+                     confidence, sensitive, fetched_at, cached)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -195,9 +205,15 @@ async def search(
         mod_findings = grouped.get(name, [])
         if not mod_findings:
             progress[name] = "skip"
-        elif any(f.title.startswith(f"{name} error") or "timed out" in f.title for f in mod_findings):
+        elif any(
+            f.title.startswith(f"{name} error") or "timed out" in f.title for f in mod_findings
+        ):
             progress[name] = "error"
-        elif any("no key" in f.title or "not installed" in f.title or "disabled" in f.title for f in mod_findings):
+        elif any(
+            phrase in f.title
+            for f in mod_findings
+            for phrase in ("no key", "not installed", "disabled")
+        ):
             progress[name] = "skip"
         else:
             progress[name] = "ok"
@@ -217,9 +233,21 @@ async def search(
 @app.get("/status", response_class=HTMLResponse)
 async def status_page(request: Request, _=Depends(require_login)):
     tool_checks = [
-        {"name": "sherlock", "available": bool(shutil.which("sherlock")), "note": "pipx install sherlock-project"},
-        {"name": "maigret", "available": bool(shutil.which("maigret")), "note": "pipx install maigret"},
-        {"name": "holehe", "available": bool(shutil.which("holehe")), "note": "pipx install holehe (also needs ENABLE_HOLEHE=true)"},
+        {
+            "name": "sherlock",
+            "available": bool(shutil.which("sherlock")),
+            "note": "pipx install sherlock-project",
+        },
+        {
+            "name": "maigret",
+            "available": bool(shutil.which("maigret")),
+            "note": "pipx install maigret",
+        },
+        {
+            "name": "holehe",
+            "available": bool(shutil.which("holehe")),
+            "note": "pipx install holehe (also needs ENABLE_HOLEHE=true)",
+        },
     ]
     return templates.TemplateResponse(
         "status.html",
@@ -231,7 +259,10 @@ async def status_page(request: Request, _=Depends(require_login)):
 async def history_page(request: Request, _=Depends(require_login)):
     with get_conn(settings.db_path) as conn:
         searches = conn.execute(
-            "SELECT id, input_type, raw_value, purpose, created_at FROM searches ORDER BY created_at DESC LIMIT 200"
+            """
+            SELECT id, input_type, raw_value, purpose, created_at FROM searches
+            ORDER BY created_at DESC LIMIT 200
+            """
         ).fetchall()
     return templates.TemplateResponse(
         "history.html",
@@ -245,7 +276,12 @@ async def history_page(request: Request, _=Depends(require_login)):
 
 
 @app.post("/history/{search_id}/delete")
-async def history_delete(request: Request, search_id: int, csrf_token: str = Form(...), _=Depends(require_login)):
+async def history_delete(
+    request: Request,
+    search_id: int,
+    csrf_token: str = Form(...),
+    _=Depends(require_login),
+):
     check_csrf(request, csrf_token)
     with get_conn(settings.db_path) as conn:
         conn.execute("DELETE FROM searches WHERE id = ?", (search_id,))

@@ -12,8 +12,10 @@ set to a temp dir and globs for that file afterwards.
 import asyncio
 import csv
 import glob
+import io
 import shutil
 import tempfile
+from pathlib import Path
 
 from app.models import Confidence, Finding, Kind
 from app.modules.base import note
@@ -52,7 +54,7 @@ async def run(query: str, ctx: dict) -> list[Finding]:
         )
         try:
             await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
             return [note(name, "Holehe timed out")]
 
@@ -63,18 +65,18 @@ async def run(query: str, ctx: dict) -> list[Finding]:
         if not csv_files:
             return [note(name, "Holehe found no results (or the CLI errored - check the Pi's logs)")]
 
+        content = await asyncio.to_thread(Path(csv_files[0]).read_text, encoding="utf-8")
         findings = []
-        with open(csv_files[0], newline="", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                if row.get("exists") != "True":
-                    continue
-                findings.append(
-                    Finding(
-                        module=name,
-                        kind=Kind.ACCOUNT,
-                        title=f"{row.get('domain', row.get('name'))}: account registered",
-                        confidence=Confidence.MEDIUM,
-                        detail={"note": "Community modules break often; verify independently."},
-                    )
+        for row in csv.DictReader(io.StringIO(content)):
+            if row.get("exists") != "True":
+                continue
+            findings.append(
+                Finding(
+                    module=name,
+                    kind=Kind.ACCOUNT,
+                    title=f"{row.get('domain', row.get('name'))}: account registered",
+                    confidence=Confidence.MEDIUM,
+                    detail={"note": "Community modules break often; verify independently."},
                 )
+            )
         return findings or [note(name, "Holehe found no results")]

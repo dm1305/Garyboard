@@ -13,6 +13,27 @@ Everything under `app/` and `tests/` is portable and runs as-is on the Pi;
 hardware-specific setup (PhoneInfoga's ARM64 binary, the systemd unit, the
 desktop launcher) is drafted in `docs/` but untested on real hardware.
 
+## Installing on the Pi
+
+Download and read `scripts/bootstrap_pi.sh` before running it (it uses
+`sudo` for `apt install` only - never for anything else):
+
+```bash
+curl -fsSL -o bootstrap_pi.sh \
+  https://raw.githubusercontent.com/dm1305/Garyboard/OSIN/cog-host/scripts/bootstrap_pi.sh
+less bootstrap_pi.sh   # read it first
+bash bootstrap_pi.sh
+```
+
+It installs system packages, clones this branch into `~/cog-host`, sets up
+the Python venv and dependencies, installs Sherlock/Maigret/Holehe via
+`pipx`, and runs the test suite to confirm the install is healthy. It's
+safe to re-run to update later - your `.env`, database and venv are never
+touched. It prints the remaining human steps (API keys, PhoneInfoga,
+vendoring htmx, autostart) at the end rather than doing them for you -
+tested end-to-end, including a second re-run to confirm nothing gets
+clobbered.
+
 ## What's built
 
 - **Guardrails**: purpose gate, hourly rate limit, sensitive-site filter,

@@ -31,7 +31,7 @@ CONFIRM_MESSAGE = (
 
 
 async def run(query: str, ctx: dict) -> list[Finding]:
-    if not ctx.get("settings").enable_holehe:
+    if not ctx["settings"].enable_holehe:
         return [note(name, "disabled (set ENABLE_HOLEHE=true to enable)")]
     if not ctx.get("holehe_confirmed"):
         return [note(name, f"skipped: not confirmed. {CONFIRM_MESSAGE}")]

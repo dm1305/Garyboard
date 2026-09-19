@@ -81,8 +81,12 @@ Open `http://localhost:8080`.
 ```bash
 . .venv/bin/activate
 python -m pytest -q
+ruff check app/ tests/ scripts/
+mypy app/ --ignore-missing-imports
 python scripts/check_keys.py   # after adding keys to .env
 ```
+
+All three (48 tests, ruff, mypy) are clean as of this commit.
 
 ## Adding a module
 

@@ -18,6 +18,12 @@ fi
 echo "== check_keys.py =="
 .venv/bin/python scripts/check_keys.py || true
 
+echo "== ruff =="
+.venv/bin/ruff check app/ tests/ scripts/
+
+echo "== mypy =="
+.venv/bin/mypy app/ --ignore-missing-imports
+
 echo "== pytest =="
 .venv/bin/python -m pytest -q
 

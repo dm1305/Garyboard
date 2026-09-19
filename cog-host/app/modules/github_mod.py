@@ -12,7 +12,7 @@ quota_cost = 1
 
 
 def _headers(ctx: dict) -> dict:
-    token = ctx.get("settings").github_token
+    token = ctx["settings"].github_token
     headers = {"Accept": "application/vnd.github+json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"

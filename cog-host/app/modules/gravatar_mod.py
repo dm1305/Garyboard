@@ -13,7 +13,7 @@ quota_cost = 1
 
 async def run(query: str, ctx: dict) -> list[Finding]:
     email_hash = hashlib.sha256(query.strip().lower().encode("utf-8")).hexdigest()
-    key = ctx.get("settings").gravatar_api_key
+    key = ctx["settings"].gravatar_api_key
     headers = {"Authorization": f"Bearer {key}"} if key else {}
 
     async with httpx.AsyncClient(timeout=timeout_seconds) as client:

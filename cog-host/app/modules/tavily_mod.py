@@ -13,7 +13,7 @@ quota_cost = 1
 
 
 async def run(query: str, ctx: dict) -> list[Finding]:
-    key = ctx.get("settings").tavily_api_key
+    key = ctx["settings"].tavily_api_key
     if not key:
         return [note(name, "no key")]
 

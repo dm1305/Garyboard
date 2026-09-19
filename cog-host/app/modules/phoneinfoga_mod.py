@@ -15,7 +15,7 @@ SCANNERS = ["local", "ovh", "googlesearch"]
 
 
 async def run(query: str, ctx: dict) -> list[Finding]:
-    base_url = ctx.get("settings").phoneinfoga_url
+    base_url = ctx["settings"].phoneinfoga_url
     try:
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             resp = await client.get(

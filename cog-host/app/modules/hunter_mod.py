@@ -13,7 +13,7 @@ quota_cost = 1
 
 
 async def run(query: str, ctx: dict) -> list[Finding]:
-    key = ctx.get("settings").hunter_api_key
+    key = ctx["settings"].hunter_api_key
     if not key:
         return [note(name, "no key")]
     if not ctx.get("use_limited_quota"):

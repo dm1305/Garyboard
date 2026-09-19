@@ -99,12 +99,13 @@ async def run_search(
 
             increment(settings.db_path, module_name, cost)
 
+    outbound_calls: list[dict] = []
     ctx = {
         "settings": settings,
         "detail": extra_detail or {},
         "use_limited_quota": use_limited_quota,
         "holehe_confirmed": holehe_confirmed,
-        "outbound_calls": [],
+        "outbound_calls": outbound_calls,
     }
 
     results = await asyncio.gather(
@@ -112,7 +113,7 @@ async def run_search(
     )
 
     with get_conn(settings.db_path) as conn:
-        for call in ctx["outbound_calls"]:
+        for call in outbound_calls:
             conn.execute(
                 "INSERT INTO outbound_log (module, host, status) VALUES (?, ?, ?)",
                 (call["module"], call["host"], call["status"]),

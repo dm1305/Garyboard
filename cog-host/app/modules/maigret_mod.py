@@ -22,7 +22,6 @@ async def run(query: str, ctx: dict) -> list[Finding]:
         return [note(name, "Maigret not installed (pipx install maigret)")]
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        out_path = Path(tmpdir) / "result.json"
         proc = await asyncio.create_subprocess_exec(
             binary,
             "--json",
@@ -33,19 +32,26 @@ async def run(query: str, ctx: dict) -> list[Finding]:
             "20",
             "--no-recursion",
             "--no-extracting",
+            "--no-autoupdate",
+            "--no-progressbar",
             "--",
             query,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
         try:
-            await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
         except asyncio.TimeoutError:
             proc.kill()
             return [note(name, "Maigret timed out")]
 
         json_files = list(Path(tmpdir).glob(f"report_{query}_simple.json"))
         if not json_files:
+            if proc.returncode != 0:
+                # Maigret prints its own errors to stdout, not stderr.
+                combined = (stderr + b"\n" + stdout).decode("utf-8", "replace").strip().splitlines()
+                detail = combined[-1] if combined else f"exit {proc.returncode}"
+                return [note(name, f"Maigret error: {detail}")]
             return [note(name, "Maigret found no results")]
 
         try:
@@ -55,7 +61,8 @@ async def run(query: str, ctx: dict) -> list[Finding]:
 
         findings = []
         for site, info in data.items():
-            if info.get("status") != "Claimed":
+            # Maigret nests the verdict under status.status, not a flat "status" key.
+            if info.get("status", {}).get("status") != "Claimed":
                 continue
             findings.append(
                 Finding(

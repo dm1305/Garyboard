@@ -4,7 +4,6 @@ Install on the Pi with: pipx install sherlock-project
 """
 import asyncio
 import csv
-import io
 import shutil
 import tempfile
 from pathlib import Path
@@ -38,13 +37,19 @@ async def run(query: str, ctx: dict) -> list[Finding]:
             stderr=asyncio.subprocess.PIPE,
         )
         try:
-            await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
         except asyncio.TimeoutError:
             proc.kill()
             return [note(name, "Sherlock timed out")]
 
         csv_path = Path(tmpdir) / f"{query}.csv"
         if not csv_path.exists():
+            if proc.returncode != 0:
+                # Sherlock prints its own errors (e.g. can't reach its site-data
+                # host) to stdout, not stderr - check both, preferring stderr.
+                combined = (stderr + b"\n" + stdout).decode("utf-8", "replace").strip().splitlines()
+                detail = combined[-1] if combined else f"exit {proc.returncode}"
+                return [note(name, f"Sherlock error: {detail}")]
             return [note(name, "Sherlock found no results")]
 
         findings = []

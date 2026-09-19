@@ -29,6 +29,12 @@ not running here (containers usually don't run one).
 - **Portable code** (everything under `app/`, `tests/`, `scripts/*.py`):
   built and tested here. Runs unmodified on the Pi - it's pure Python with
   no architecture-specific dependencies.
+- **Sherlock, Maigret and Holehe** ARE installed and tested here (`pipx
+  install --backend pip <name>`; the default `uv` backend refused due to a
+  version mismatch, `--backend pip` worked). They're pure Python, so this
+  worked despite the `x86_64` mismatch, and it caught two real bugs in the
+  adapters that guessing at the docs would have missed - see
+  `docs/TOOL_TESTING.md`.
 - **Hardware/OS-specific steps** could not be executed in this container and
   still need doing on the actual Pi:
   - Phase 0's audit (re-run the commands above on the Pi itself and record
@@ -36,7 +42,8 @@ not running here (containers usually don't run one).
   - Phase 1's `apt install` list - not run here since this container's
     package set already differs from a fresh Pi OS image.
   - PhoneInfoga's `linux/arm64` release binary (this container is
-    `x86_64` - the arm64 binary won't run here at all).
+    `x86_64` - the arm64 binary won't run here at all, and its GitHub
+    releases page was also blocked by this container's egress policy).
   - The systemd **user** service in `docs/cog-host.service` - drafted but
     never started, because no user systemd manager is running here.
   - The desktop launcher (`docs/cog-host.desktop`) - needs Chromium on the

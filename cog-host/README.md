@@ -31,14 +31,21 @@ desktop launcher) is drafted in `docs/` but untested on real hardware.
 - **External-tool adapters**, subprocess-based, skip cleanly if the binary
   isn't installed: Sherlock, Maigret, Holehe (off by default, needs
   `ENABLE_HOLEHE=true` **and** a per-search confirmation tick), PhoneInfoga
-  (calls a local service, see `docs/PHONEINFOGA.md`).
+  (calls a local service, see `docs/PHONEINFOGA.md`). Sherlock, Maigret and
+  Holehe were installed and run for real here, which found and fixed two
+  real bugs (Maigret's nested status field, Holehe's actual CSV-only output)
+  - see `docs/TOOL_TESTING.md` for exactly what was checked. PhoneInfoga
+  couldn't be tested (arm64-only binary, blocked releases page) - its
+  scanner list is unverified.
 - **UI**: search page with type auto-detection and an override, purpose
   dropdown, live per-module progress, confidence chips, and Status /
   History / Keys / About pages. Vendor HTMX per `app/static/README.md` for
   the live-progress enhancement; the app works fully without it.
-- **46 tests** covering input detection/rejection, the guard, offline
+- **48 tests** covering input detection/rejection, the guard, offline
   modules (mocked HTTP/DNS), keyed-module key handling, subprocess-tool
-  fallback, DB purge, and the LAN-bind refusal.
+  fallback, DB purge, the LAN-bind refusal, and regression tests for the two
+  real bugs found while testing Sherlock/Maigret/Holehe against the real
+  CLIs.
 
 ## What's still a human step
 
@@ -46,7 +53,11 @@ desktop launcher) is drafted in `docs/` but untested on real hardware.
   `.env` - nobody but you should do this.
 - Running Phase 0/1 on the actual Pi and updating `docs/ENVIRONMENT.md`.
 - Installing Sherlock/Maigret/Holehe/PhoneInfoga on the Pi (`pipx install
-  ...`) - not run in this dev container.
+  --backend pip ...` - the default `uv` backend needs a newer `uv` than this
+  container had; check the Pi's `uv --version` before dropping that flag).
+- PhoneInfoga specifically still needs its own setup on the Pi and its
+  scanner behaviour confirmed - see `docs/PHONEINFOGA.md` and the "what's
+  still unverified" section of `docs/TOOL_TESTING.md`.
 - Vendoring `htmx.min.js` (blocked by this container's network policy, see
   `app/static/README.md`).
 - The Phase 6 human smoke test: search your own email, phone, and handle

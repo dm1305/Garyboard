@@ -3,12 +3,17 @@
 filter and this module only runs when ENABLE_HOLEHE=true AND the caller
 has ticked the per-search confirm box.
 Install on the Pi with: pipx install holehe
+
+Holehe 1.61 has no JSON output flag - only -C/--csv, and it writes
+`holehe_<timestamp>_<email>_results.csv` to the current working directory
+(no --folderoutput option), so this adapter runs the subprocess with cwd
+set to a temp dir and globs for that file afterwards.
 """
 import asyncio
-import json
+import csv
+import glob
 import shutil
 import tempfile
-from pathlib import Path
 
 from app.models import Confidence, Finding, Kind
 from app.modules.base import note
@@ -34,14 +39,14 @@ async def run(query: str, ctx: dict) -> list[Finding]:
         return [note(name, "Holehe not installed (pipx install holehe)")]
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        out_path = Path(tmpdir) / "out.json"
         proc = await asyncio.create_subprocess_exec(
             binary,
+            "--only-used",
+            "--no-color",
+            "--csv",
             "--",
             query,
-            "--json",
-            str(out_path),
-            "--only-used",
+            cwd=tmpdir,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -51,25 +56,25 @@ async def run(query: str, ctx: dict) -> list[Finding]:
             proc.kill()
             return [note(name, "Holehe timed out")]
 
-        if not out_path.exists():
-            return [note(name, "Holehe found no results")]
-
-        try:
-            data = json.loads(out_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            return [note(name, "Could not parse Holehe output")]
+        # Holehe's own CLI calls exit("All results have been exported...") on the
+        # success path, so it always exits 1 - the return code can't distinguish
+        # success from failure here. Whether the CSV appeared is the only signal.
+        csv_files = glob.glob(f"{tmpdir}/holehe_*_results.csv")
+        if not csv_files:
+            return [note(name, "Holehe found no results (or the CLI errored - check the Pi's logs)")]
 
         findings = []
-        for entry in data:
-            if not entry.get("exists"):
-                continue
-            findings.append(
-                Finding(
-                    module=name,
-                    kind=Kind.ACCOUNT,
-                    title=f"{entry.get('name')}: account registered",
-                    confidence=Confidence.MEDIUM,
-                    detail={"note": "Community modules break often; verify independently."},
+        with open(csv_files[0], newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                if row.get("exists") != "True":
+                    continue
+                findings.append(
+                    Finding(
+                        module=name,
+                        kind=Kind.ACCOUNT,
+                        title=f"{row.get('domain', row.get('name'))}: account registered",
+                        confidence=Confidence.MEDIUM,
+                        detail={"note": "Community modules break often; verify independently."},
+                    )
                 )
-            )
         return findings or [note(name, "Holehe found no results")]

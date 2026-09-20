@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <form method="post" action="/search">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field">
+      <label for="query">Email, phone, @username, "Name, Company", or profile URL</label>
+      <input type="text" id="query" name="query" required maxlength="320"
+             value="{{ query or '' }}" autofocus>
+    </div>
+    <div class="field">
+      <label for="hint">Type (auto-detected if left as "Auto")</label>
+      <select id="hint" name="hint">
+        <option value="" {% if not hint %}selected{% endif %}>Auto</option>
+        <option value="email" {% if hint == 'email' %}selected{% endif %}>Email</option>
+        <option value="phone" {% if hint == 'phone' %}selected{% endif %}>Phone</option>
+        <option value="username" {% if hint == 'username' %}selected{% endif %}>Username</option>
+        <option value="name_company" {% if hint == 'name_company' %}selected{% endif %}>Name + company</option>
+        <option value="url" {% if hint == 'url' %}selected{% endif %}>URL</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="purpose">Purpose</label>
+      <select id="purpose" name="purpose">
+        <option value="own_footprint">Checking my own footprint</option>
+        <option value="verify_contact">Verifying a recruiter or work contact</option>
+        <option value="scam_check">Checking an unknown caller or scam sender</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="purpose_note">Note (required if "Other")</label>
+      <input type="text" id="purpose_note" name="purpose_note" maxlength="200">
+    </div>
+    <div class="field">
+      <label><input type="checkbox" name="confirmed" value="yes" required style="width:auto;display:inline-block;margin-right:0.4rem;">
+        I confirm this search is for one of the purposes above</label>
+    </div>
+    <div class="field">
+      <label><input type="checkbox" name="use_limited_quota" value="yes" style="width:auto;display:inline-block;margin-right:0.4rem;">
+        Also run limited-quota checks (Hunter email verification)</label>
+    </div>
+    {% if enable_holehe %}
+    <div class="field">
+      <label><input type="checkbox" name="holehe_confirmed" value="yes" style="width:auto;display:inline-block;margin-right:0.4rem;">
+        Run Holehe - only on addresses I own or have consent to check</label>
+    </div>
+    {% endif %}
+    <button type="submit">Search</button>
+  </form>
+</div>
+
+{% if error %}
+<div class="card" style="border-color: var(--danger);">
+  <strong style="color: var(--danger);">{{ error }}</strong>
+</div>
+{% endif %}
+
+{% if findings is not none %}
+<div class="card">
+  <h2>Results for "{{ query }}"</h2>
+  <p class="finding-meta">Detected as: {{ detected_type }}</p>
+
+  <h3>Progress</h3>
+  {% for mod_name, mod_status in progress.items() %}
+  <div class="progress-row">
+    <span>{{ mod_name }}</span>
+    <span class="progress-{{ mod_status }}">{{ mod_status }}</span>
+  </div>
+  {% endfor %}
+
+  {% for group_name, group_findings in grouped.items() %}
+  <div class="module-group">
+    <h3>{{ group_name }}</h3>
+    {% for f in group_findings %}
+    <div class="finding">
+      <div class="finding-title">
+        {% if f.url %}<a href="{{ f.url }}" target="_blank" rel="noopener noreferrer">{{ f.title }}</a>{% else %}{{ f.title }}{% endif %}
+      </div>
+      <div class="finding-meta">
+        <span class="confidence-{{ f.confidence.value }}">{{ f.confidence.value }}</span>
+        · {{ f.kind.value }}{% if f.cached %} · cached{% endif %}
+        {% if f.detail.also_found_by %} · also found by {{ f.detail.also_found_by | join(", ") }}{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

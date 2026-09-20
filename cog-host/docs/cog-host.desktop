@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Cog Host
+Comment=Local OSINT dashboard
+Exec=chromium --app=http://localhost:8080
+Icon=applications-internet
+Terminal=false
+Categories=Utility;
+
+# Before installing, confirm the Chromium binary name on your Pi:
+#   which chromium chromium-browser
+# and edit Exec= above to match, then:
+#   mkdir -p ~/.local/share/applications
+#   cp docs/cog-host.desktop ~/.local/share/applications/

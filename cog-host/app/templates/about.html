@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>About Cog Host</h2>
+  <p>Cog Host combines results from several open-source tools and free APIs into
+  one local dashboard for self-audit and contact verification: checking your own
+  footprint, verifying a recruiter or work contact, or checking an unknown caller
+  or scam sender.</p>
+</div>
+<div class="notice">
+  <strong>Notice.</strong> Looking up other people means handling personal data.
+  In the UK, the GDPR and the Data Protection Act 2018 apply once this goes
+  beyond purely personal or household use, and the Computer Misuse Act 1990
+  applies to anything that bypasses access controls (logging in as someone
+  else, scraping behind a login, automating a platform against its terms).
+  Cog Host is built to stay on the right side of that line: no scraping, no
+  bulk lookups, no logging in as you to view someone else's account, and
+  breach checks return names only, never contents. This is not legal advice.
+</div>
+<div class="card">
+  <h2>What this deliberately does not do</h2>
+  <ul>
+    <li>No LinkedIn, WhatsApp, Facebook or Instagram scraping, and no automation of a logged-in session</li>
+    <li>No unofficial WhatsApp client libraries</li>
+    <li>No physical address lookup, data-broker or people-search sites</li>
+    <li>No leaked-credential contents, only breach names</li>
+    <li>No bulk upload, CSV import, or scheduled monitoring of a person over time</li>
+    <li>Never exposed to the public internet</li>
+  </ul>
+</div>
+{% endblock %}

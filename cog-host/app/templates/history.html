@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>History</h2>
+  <p class="finding-meta">Retention: {{ retention_days }} days. Raw values are kept only here.</p>
+  <form method="post" action="/history/purge" onsubmit="return confirm('Delete everything?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" style="background: var(--danger);">Delete everything</button>
+  </form>
+</div>
+
+<div class="card">
+  <table>
+    <tr><th>When</th><th>Type</th><th>Value</th><th>Purpose</th><th></th></tr>
+    {% for s in searches %}
+    <tr>
+      <td>{{ s.created_at }}</td>
+      <td>{{ s.input_type }}</td>
+      <td>{{ s.raw_value }}</td>
+      <td>{{ s.purpose }}</td>
+      <td>
+        <a href="/history/{{ s.id }}/export.json" style="font-size: 0.8rem;">JSON</a>
+        · <a href="/history/{{ s.id }}/export.csv" style="font-size: 0.8rem;">CSV</a>
+        <form method="post" action="/history/{{ s.id }}/delete" style="display:inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" style="background: var(--danger); padding: 0.2rem 0.6rem; font-size: 0.8rem;">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">No searches yet.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

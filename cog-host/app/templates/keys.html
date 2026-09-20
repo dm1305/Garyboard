@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Keys</h2>
+  <p class="finding-meta">Read-only. Keys are set in <code>.env</code> - never enter them here.</p>
+  <table>
+    <tr><th>Service</th><th>Status</th><th>Value</th></tr>
+    {% for k in keys %}
+    <tr>
+      <td>{{ k.name }}</td>
+      <td>{{ "configured" if k.configured else "missing" }}</td>
+      <td>{{ k.masked }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
